@@ -9,6 +9,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <link rel="stylesheet" href="{{ asset('admin_lte') }}/dist/css/adminlte.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+      {{-- dataTables --}}
+  <link rel="stylesheet" href="{{ asset('admin_lte') }}/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="{{ asset('admin_lte') }}/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+  <link rel="stylesheet" href="{{ asset('admin_lte') }}/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
     <style>
         a{
             text-decoration: none;
@@ -67,7 +71,7 @@
             <a href="/" class="nav-link">Home</a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">List Order</a>
+            <a href="/list_order" class="nav-link">List Order</a>
           </li>
         </ul>
     </nav>
@@ -95,6 +99,14 @@
         text: '{{$message}}',
       })
     @endif
+</script>
+<!-- DataTables  & Plugins -->
+<script src="{{ asset('admin_lte') }}/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="{{ asset('admin_lte') }}/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script>
+    $(document).ready( function () {
+        $('#myTable').DataTable();
+    });
 </script>
 </body>
 </html>

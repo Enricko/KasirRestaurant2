@@ -38,13 +38,23 @@ class FrontendController extends Controller
     }
     public function order($id_pesanan)
     {
-        $data['masakan'] = Masakan::all();
-        $data['makanan'] = Masakan::where('type','makanan')->get();
-        $data['minuman'] = Masakan::where('type','minuman')->get();
-        $data['detail_pesanan'] = DetailPesanan::join('masakans','masakans.id_masakan','=','detail_pesanans.id_masakan')->where('id_pesanan',$id_pesanan)->get();
-        $data['pesanan'] = Pesanan::where('id_pesanan',$id_pesanan)->get();
-        $data['id_pesanan'] = $id_pesanan;
-        return view('frontend.order',$data);
+        if(Pesanan::where('id_pesanan',$id_pesanan)->first()){
+            $data['masakan'] = Masakan::all();
+            $data['makanan'] = Masakan::where('type','makanan')->get();
+            $data['minuman'] = Masakan::where('type','minuman')->get();
+            $data['detail_pesanan'] = DetailPesanan::join('masakans','masakans.id_masakan','=','detail_pesanans.id_masakan')->where('id_pesanan',$id_pesanan)->get();
+            $data['pesanan'] = Pesanan::where('id_pesanan',$id_pesanan)->get();
+            $data['id_pesanan'] = $id_pesanan;
+            return view('frontend.order',$data);
+        }else{
+            return redirect()->to('/')->with("delete","Pesanan tidak di temukan");
+        }
+    }
+    public function list_order()
+    {
+        $data['pesanan'] = Pesanan::where('status_pesanan','0')->get();
+        $data['meja'] = Meja::get();
+        return view('frontend.list_order',$data);
     }
     public function select_menu()
     {
@@ -92,6 +102,19 @@ class FrontendController extends Controller
             return Response($output);
         }
     }
+    public function order_batal($id_pesanan)
+    {
+        $pesanan = Pesanan::where('id_pesanan',$id_pesanan)->first();
+        Meja::where('no_meja',$pesanan->no_meja)->update(['status_meja' => 'kosong']);
+        DetailPesanan::where('id_pesanan',$id_pesanan)->delete();
+        Pesanan::where('id_pesanan',$id_pesanan)->delete();
+
+        if(request()->batal == 'order'){
+            return redirect()->to('/')->with('delete','Pesanan telah di batalkan');
+        }elseif(request()->batal == 'list_order'){
+            return redirect()->to('/list_order')->with('delete','Pesanan telah di batalkan');
+        }
+    }
     public static function outputAjax($id_masakan,$id_pesanan)
     {
         $masakan = Masakan::where('id_masakan',request()->id_masakan)->first();
@@ -115,42 +138,46 @@ class FrontendController extends Controller
                         <button class='btn btn-secondary float-right' onclick='return add_pesanan($masakan->id_masakan)'>Pesan</button>
                     </div>
                 </div>
-                <table class='table table-bordered table-dark mt-3'>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Nama</th>
-                            <th>Harga</th>
-                            <th>Qty</th>
-                            <th>Total</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody style='width: 100%; height: 100px; overflow-y: scroll;'>";
-                    foreach($detail_pesanan as $row){
-                        $output .="
+                <div class='mt-3' style='width: 100%; height: 300px; overflow-y: scroll;'>
+                    <table class='table table-bordered table-dark mt-3'>
+                        <thead>
                             <tr>
-                                <td>".$no++."</td>
-                                <td>".$row->nama_masakan."</td>
-                                <td>Rp.".number_format($row->harga)."</td>
-                                <td>".number_format($row->qty)."</td>
-                                <td>Rp.".number_format($row->sub_total)."</td>
-                                <td>
-                                    <button class='btn btn-warning' onclick='return select_menu($row->id_masakan)'>Edit</a>
-                                    <button class='btn btn-danger' onclick='return remove_pesanan($row->id_detail,$row->id_masakan)'>Delete</a>
-                                </td>
-                            </tr>";
-                        $total += $row->sub_total;
-                    }
-                    $output .="
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th colspan='4' class='text-center'>Subtotal</th>
-                            <th colspan='2' class='text-center'>Rp.".number_format($total)."</th>
-                        </tr>
-                    </tfoot>
-                </table>
+                                <th>#</th>
+                                <th>Nama</th>
+                                <th>Harga</th>
+                                <th>Qty</th>
+                                <th>Total</th>
+                                <th>Keterangan Pesanan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody style='width: 100%; height: 100px; overflow-y: scroll;'>";
+                        foreach($detail_pesanan as $row){
+                            $output .="
+                                <tr>
+                                    <td>".$no++."</td>
+                                    <td>".$row->nama_masakan."</td>
+                                    <td>Rp.".number_format($row->harga)."</td>
+                                    <td>".number_format($row->qty)."</td>
+                                    <td>Rp.".number_format($row->sub_total)."</td>
+                                    <td>".$row->keterangan_pesanan."</td>
+                                    <td>
+                                        <button class='btn btn-warning' onclick='return select_menu($row->id_masakan)'>Edit</a>
+                                        <button class='btn btn-danger' onclick='return remove_pesanan($row->id_detail,$row->id_masakan)'>Delete</a>
+                                    </td>
+                                </tr>";
+                            $total += $row->sub_total;
+                        }
+                        $output .="
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan='5' class='text-center'>Subtotal</th>
+                                <th colspan='2' class='text-center'>Rp.".number_format($total)."</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             ";
         }else{
             $output .= "
@@ -160,49 +187,54 @@ class FrontendController extends Controller
                         <h4>".$masakan->nama_masakan."</h4>
                         <p>Rp.".number_format($masakan->harga,0,'.',',')."</p>
                     </div>
-                    <input type='number' class='form-control' placeholder='qty' name='qty' id='qty-masakan' maxlength='5' required oninput='javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); return qty_masakan(value,".$masakan->harga.");'>
-                    <input type='text' class='form-control mt-2' placeholder='Keterangan' name='keterangan_pesanan' id='keterangan_pesanan'>
+                    <input type='number' class='form-control' placeholder='qty' name='qty' id='qty-masakan' maxlength='5' value='".$pesanan->qty."' required oninput='javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); return qty_masakan(value,".$masakan->harga.");'>
+                    <input type='text' class='form-control mt-2' placeholder='Keterangan' name='keterangan_pesanan' value='".$pesanan->keterangan_pesanan."' id='keterangan_pesanan'>
                     <h5 class='mt-1 float-right'>Subtotal : <span id='subtotal-masakan'>Rp.0</span></h5>
                     <div class='col-12'>
                         <button class='btn btn-warning float-right' onclick='return add_pesanan($masakan->id_masakan)'>Edit</button>
                     </div>
                 </div>
-                <table class='table table-bordered table-dark mt-3'>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Nama</th>
-                            <th>Harga</th>
-                            <th>Qty</th>
-                            <th>Total</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody style='width: 100%; height: 100px; overflow-y: scroll;'>";
-                    foreach($detail_pesanan as $row){
-                        $output .="
+
+                <div class='mt-3' style='width: 100%; height: 300px; overflow-y: scroll;'>
+                    <table class='table table-bordered table-dark'>
+                        <thead>
                             <tr>
-                                <td>".$no++."</td>
-                                <td>".$row->nama_masakan."</td>
-                                <td>Rp.".number_format($row->harga)."</td>
-                                <td>".number_format($row->qty)."</td>
-                                <td>Rp.".number_format($row->sub_total)."</td>
-                                <td>
-                                    <button class='btn btn-warning' onclick='return select_menu($row->id_masakan)'>Edit</a>
-                                    <button class='btn btn-danger' onclick='return remove_pesanan($row->id_detail,$row->id_masakan)'>Delete</a>
-                                </td>
-                            </tr>";
-                        $total += $row->sub_total;
-                    }
-                    $output .="
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th colspan='4' class='text-center'>Subtotal</th>
-                            <th colspan='2' class='text-center'>Rp.".number_format($total)."</th>
-                        </tr>
-                    </tfoot>
-                </table>
+                                <th>#</th>
+                                <th>Nama</th>
+                                <th>Harga</th>
+                                <th>Qty</th>
+                                <th>Total</th>
+                                <th>Keterangan Pesanan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody style='width: 100%; height: 100px; overflow-y: scroll;'>";
+                        foreach($detail_pesanan as $row){
+                            $output .="
+                                <tr>
+                                    <td>".$no++."</td>
+                                    <td>".$row->nama_masakan."</td>
+                                    <td>Rp.".number_format($row->harga)."</td>
+                                    <td>".number_format($row->qty)."</td>
+                                    <td>Rp.".number_format($row->sub_total)."</td>
+                                    <td>".$row->keterangan_pesanan."</td>
+                                    <td>
+                                        <button class='btn btn-warning' onclick='return select_menu($row->id_masakan)'>Edit</a>
+                                        <button class='btn btn-danger' onclick='return remove_pesanan($row->id_detail,$row->id_masakan)'>Delete</a>
+                                    </td>
+                                </tr>";
+                            $total += $row->sub_total;
+                        }
+                        $output .="
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan='5' class='text-center'>Subtotal</th>
+                                <th colspan='2' class='text-center'>Rp.".number_format($total)."</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             ";
         }
 

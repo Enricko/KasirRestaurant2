@@ -3,6 +3,19 @@
 @section('content')
 <div class="container-fluid">
     <div class="card mt-5" style="background-color:#414141;height:100%;box-shadow:5px 5px 5px 5px black">
+        <div class="mx-auto mt-2">
+            <div class="row">
+                <div class="col-6">
+                    <form action="/order_batal/{{ $id_pesanan }}" method="POST">
+                        @csrf
+                        <button class="btn btn-danger" onclick="return confirm('Apakah anda yakin?')" type="submit" name="batal" value="order">Batal</button>
+                    </form>
+                </div>
+                <div class="col-6">
+                    <a href="/list_order" class="btn btn-success" onclick="return confirm('Apakah anda yakin?')" type="submit">Selesai</a>
+                </div>
+            </div>
+        </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-4 col-sm-5 col-md-6 col-lg-7 col-xl-8">
@@ -53,46 +66,50 @@
                     <div class="card" style="background-color:#515151;width: 100%; height: 510px; overflow-y: scroll;">
                         <div class="card-body">
                             <div class="select-masakan text-light">
-                                <table class="table table-bordered table-dark">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Nama</th>
-                                            <th>Harga</th>
-                                            <th>Qty</th>
-                                            <th>Total</th>
-                                            <th>Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody style="width: 100%; height: 100px; overflow-y: scroll;">
-                                        @php
-                                            $no = 1;
-                                            $total = 0;
-                                        @endphp
-                                        @foreach ($detail_pesanan as $row)
+                                <div style="width: 100%; height: 300px;">
+                                    <table class="table table-bordered table-responsive table-dark">
+                                        <thead>
                                             <tr>
-                                                <td>{{ $no++ }}</td>
-                                                <td>{{ $row->nama_masakan }}</td>
-                                                <td>Rp.{{ number_format($row->harga) }}</td>
-                                                <td>{{ number_format($row->qty) }}</td>
-                                                <td>Rp.{{ number_format($row->sub_total) }}</td>
-                                                <td>
-                                                    <button class="btn btn-warning" onclick="return select_menu({{ $row->id_masakan }})">Edit</a>
-                                                    <button class="btn btn-danger" onclick="return remove_pesanan({{ $row->id_detail}},{{$row->id_masakan}})">Delete</a>
-                                                </td>
+                                                <th>#</th>
+                                                <th>Nama</th>
+                                                <th>Harga</th>
+                                                <th>Qty</th>
+                                                <th>Total</th>
+                                                <th>Keterangan Pesanan</th>
+                                                <th>Aksi</th>
                                             </tr>
+                                        </thead>
+                                        <tbody>
                                             @php
-                                                $total += $row->sub_total;
+                                                $no = 1;
+                                                $total = 0;
                                             @endphp
-                                        @endforeach
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="4" class="text-center">Subtotal</th>
-                                            <th colspan="2" class="text-center">Rp.{{ number_format($total) }}</th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                                            @foreach ($detail_pesanan as $row)
+                                                <tr>
+                                                    <td>{{ $no++ }}</td>
+                                                    <td>{{ $row->nama_masakan }}</td>
+                                                    <td>Rp.{{ number_format($row->harga) }}</td>
+                                                    <td>{{ number_format($row->qty) }}</td>
+                                                    <td>Rp.{{ number_format($row->sub_total) }}</td>
+                                                    <td>{{ $row->keterangan_pesanan }}</td>
+                                                    <td>
+                                                        <button class="btn btn-warning" onclick="return select_menu({{ $row->id_masakan }})">Edit</a>
+                                                        <button class="btn btn-danger" onclick="return remove_pesanan({{ $row->id_detail}},{{$row->id_masakan}})">Delete</a>
+                                                    </td>
+                                                </tr>
+                                                @php
+                                                    $total += $row->sub_total;
+                                                @endphp
+                                            @endforeach
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <th colspan="5" class="text-center">Subtotal</th>
+                                                <th colspan="2" class="text-center">Rp.{{ number_format($total) }}</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

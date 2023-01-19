@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', [App\Http\Controllers\FrontendController::class, 'index']);
 Route::get('/start_order', [App\Http\Controllers\FrontendController::class, 'start_order']);
 Route::get('/order/{id_pesanan}', [App\Http\Controllers\FrontendController::class, 'order']);
+Route::post('/order_batal/{id_pesanan}', [App\Http\Controllers\FrontendController::class, 'order_batal']);
+Route::get('/list_order', [App\Http\Controllers\FrontendController::class, 'list_order']);
 Route::get('/select_menu', [App\Http\Controllers\FrontendController::class, 'select_menu']);
 Route::post('/add_pesanan', [App\Http\Controllers\FrontendController::class, 'add_pesanan']);
 Route::get('/remove_pesanan', [App\Http\Controllers\FrontendController::class, 'remove_pesanan']);
